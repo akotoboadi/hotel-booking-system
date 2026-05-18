@@ -142,3 +142,15 @@ img {
 .fade-in {
   animation: fadeIn 0.4s ease forwards;
 }
+
+/* ── Global responsive base ── */
+@media (max-width: 768px) {
+  .container { padding: 0 16px; }
+
+  .btn-primary,
+  .btn-accent,
+  .btn-outline {
+    padding: 10px 20px;
+    font-size: 0.85rem;
+  }
+}
