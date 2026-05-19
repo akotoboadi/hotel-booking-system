@@ -1,0 +1,8 @@
+.rooms-page h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+.rooms-page p  { font-size: 0.875rem; color: var(--gray-400); }
+.rooms-table-wrap { overflow-x: auto; }
+
+@media (max-width: 600px) {
+  .data-table { min-width: 540px; }
+  .rooms-page h1 { font-size: 1.25rem; }
+}

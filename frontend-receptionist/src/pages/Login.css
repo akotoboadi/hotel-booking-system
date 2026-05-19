@@ -1,0 +1,58 @@
+.rec-login {
+  min-height: 100vh; display: grid;
+  grid-template-columns: 460px 1fr;
+}
+
+.rec-login__panel {
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px 40px; background: white;
+}
+
+.rec-login__card { width: 100%; max-width: 360px; }
+
+.rec-login__logo { display: flex; align-items: center; gap: 12px; margin-bottom: 36px; }
+.rec-login__logo-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--primary); color: white;
+  display: flex; align-items: center; justify-content: center;
+}
+.rec-login__logo-name { font-size: 1.1rem; font-weight: 800; color: var(--gray-800); }
+.rec-login__logo-sub  { font-size: 0.72rem; color: var(--gray-400); margin-top: 1px; }
+
+.rec-login__card h1 { font-size: 1.55rem; font-weight: 800; color: var(--gray-800); margin-bottom: 6px; }
+.rec-login__card p  { font-size: 0.9rem; color: var(--gray-400); margin-bottom: 28px; }
+
+.rec-login__error {
+  background: var(--danger-light); color: var(--danger);
+  border: 1px solid #fecaca; border-radius: var(--radius-sm);
+  padding: 10px 14px; font-size: 0.84rem; margin-bottom: 18px;
+}
+
+.rec-login__form { display: flex; flex-direction: column; gap: 18px; }
+
+.rec-login__pwd { position: relative; }
+.rec-login__pwd input { padding-right: 44px; }
+.rec-login__pwd button {
+  position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: var(--gray-400); cursor: pointer;
+}
+
+.rec-login__submit { width: 100%; justify-content: center; padding: 13px; font-size: 0.95rem; }
+.rec-login__submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.rec-login__visual { position: relative; overflow: hidden; }
+.rec-login__visual img { width: 100%; height: 100%; object-fit: cover; }
+.rec-login__visual-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(10,20,50,0.85) 0%, rgba(10,20,50,0.3) 60%);
+  display: flex; flex-direction: column; justify-content: flex-end;
+  align-items: flex-start; padding: 48px; gap: 12px;
+}
+.rec-login__visual-overlay h2 { font-size: 1.7rem; color: white; font-weight: 700; max-width: 380px; line-height: 1.3; }
+.rec-login__visual-overlay p  { font-size: 0.9rem; color: rgba(255,255,255,0.65); max-width: 340px; }
+
+@media (max-width: 900px) {
+  .rec-login { grid-template-columns: 1fr; }
+  .rec-login__visual { display: none; }
+  .rec-login__panel { min-height: 100vh; padding: 40px 24px; }
+}

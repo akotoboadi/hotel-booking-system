@@ -1,0 +1,60 @@
+.roomgrid-legend {
+  display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px;
+}
+
+.legend-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px; border-radius: 20px;
+  border: 1.5px solid var(--gray-200); background: white;
+  font-size: 0.82rem; font-weight: 500; color: var(--gray-600);
+  cursor: pointer; transition: var(--transition);
+}
+.legend-btn:hover { border-color: var(--gray-400); }
+.legend-btn--active, .legend-btn--all { background: var(--gray-800); color: white; border-color: var(--gray-800); }
+
+.legend-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--dot-color, var(--gray-400)); flex-shrink: 0;
+}
+
+.roomgrid-floor { margin-bottom: 28px; }
+.roomgrid-floor__label {
+  font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--gray-400); margin-bottom: 12px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--gray-200);
+}
+.roomgrid-floor__rooms { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.room-tile {
+  width: 90px; height: 90px; border-radius: var(--radius-sm);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; cursor: pointer; border: 2px solid transparent;
+  transition: var(--transition); position: relative; overflow: hidden;
+}
+.room-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+.room-tile--available   { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+.room-tile--occupied    { background: #eef2ff; color: #3730a3; border-color: #c7d2fe; }
+.room-tile--maintenance { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+.room-tile--reserved    { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+
+.room-tile__num   { font-size: 1rem; font-weight: 800; line-height: 1; }
+.room-tile__type  { font-size: 0.65rem; font-weight: 600; opacity: 0.75; text-align: center; line-height: 1.2; }
+.room-tile__guest { font-size: 0.62rem; opacity: 0.65; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px; }
+
+.room-detail { display: flex; flex-direction: column; gap: 14px; }
+.room-detail__status {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; border-radius: var(--radius-sm);
+  font-size: 0.875rem; font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .room-tile { width: 76px; height: 76px; }
+  .room-tile__num { font-size: 0.9rem; }
+  .roomgrid-legend { gap: 6px; }
+  .legend-btn { font-size: 0.76rem; padding: 6px 12px; }
+}
+@media (max-width: 400px) {
+  .room-tile { width: 66px; height: 66px; }
+}

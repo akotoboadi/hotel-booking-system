@@ -1,0 +1,58 @@
+.staff-role-summary { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+
+.role-chip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px; background: white;
+  border: 1px solid var(--gray-200); border-radius: 20px;
+  font-size: 0.83rem; color: var(--gray-600); font-weight: 500;
+}
+
+.staff-controls { display: flex; gap: 12px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
+
+.staff-name-cell { display: flex; align-items: center; gap: 10px; }
+
+.staff-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--primary-light); color: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.875rem; flex-shrink: 0;
+}
+
+.status-toggle {
+  border: none; border-radius: 20px; padding: 4px 12px;
+  font-size: 0.76rem; font-weight: 600; cursor: pointer;
+  transition: var(--transition);
+}
+.status-toggle--active   { background: var(--success-light); color: #065f46; }
+.status-toggle--inactive { background: var(--gray-100); color: var(--gray-500); }
+.status-toggle:hover { opacity: 0.8; }
+
+/* ── Responsive Staff ── */
+@media (max-width: 900px) {
+  .staff-controls { flex-direction: column; align-items: flex-start; }
+  .search-box { width: 100%; }
+  .staff-role-summary { gap: 6px; }
+}
+
+@media (max-width: 768px) {
+  .data-table thead { display: none; }
+  .data-table, .data-table tbody, .data-table tr, .data-table td { display: block; width: 100%; }
+  .data-table tr { padding: 14px 16px; border-bottom: 1px solid var(--gray-200); }
+  .data-table td {
+    padding: 4px 0; border: none; font-size: 0.84rem;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .data-table td::before {
+    content: attr(data-label);
+    font-size: 0.72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--gray-400); min-width: 90px;
+  }
+}
+
+@media (max-width: 600px) {
+  .filter-tabs { flex-wrap: wrap; gap: 4px; }
+  .filter-tab { padding: 6px 12px; font-size: 0.78rem; }
+  .page-top h1 { font-size: 1.2rem; }
+  .role-chip { font-size: 0.78rem; padding: 5px 10px; }
+}

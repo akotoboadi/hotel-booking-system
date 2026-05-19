@@ -1,0 +1,72 @@
+.rec-dash__heading { margin-bottom: 22px; }
+.rec-dash__heading h1 { font-size: 1.45rem; font-weight: 800; color: var(--gray-800); margin-bottom: 4px; }
+.rec-dash__heading p  { font-size: 0.875rem; color: var(--gray-500); }
+
+.rec-dash__stats {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 14px; margin-bottom: 20px;
+}
+
+.rec-stat-card {
+  background: white; border-radius: var(--radius);
+  border: 1px solid var(--gray-200); padding: 18px;
+  display: flex; gap: 14px; align-items: flex-start;
+  box-shadow: var(--shadow-sm);
+}
+.rec-stat-card__icon {
+  width: 44px; height: 44px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.rec-stat-card__label { font-size: 0.76rem; color: var(--gray-400); font-weight: 500; margin-bottom: 3px; }
+.rec-stat-card__value { font-size: 1.55rem; font-weight: 800; color: var(--gray-800); line-height: 1; margin-bottom: 4px; }
+.rec-stat-card__sub   { font-size: 0.75rem; color: var(--gray-400); }
+
+.rec-dash__cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* Arrival/departure list */
+.rec-arrivals-list { display: flex; flex-direction: column; }
+
+.arrival-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 18px; border-bottom: 1px solid var(--gray-100);
+  transition: background 0.15s;
+}
+.arrival-item:last-of-type { border-bottom: none; }
+.arrival-item:hover { background: var(--gray-50); }
+.arrival-item--done { opacity: 0.55; }
+
+.arrival-item__avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--primary-light); color: var(--primary);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+.arrival-item__info { flex: 1; min-width: 0; }
+.arrival-item__name { font-size: 0.875rem; font-weight: 600; color: var(--gray-800); margin-bottom: 2px; }
+.arrival-item__meta { font-size: 0.78rem; color: var(--gray-400); margin-bottom: 6px; }
+.arrival-item__footer { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.arrival-item__eta {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 0.75rem; color: var(--gray-400);
+}
+
+.arrival-item__action { flex-shrink: 0; }
+.arrival-item__done {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.8rem; font-weight: 600; color: var(--success);
+}
+
+.rec-dash__alert {
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 18px; background: var(--warning-light);
+  font-size: 0.8rem; color: #92400e; font-weight: 500;
+}
+
+@media (max-width: 1100px) { .rec-dash__stats { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 900px)  { .rec-dash__cols  { grid-template-columns: 1fr; } }
+@media (max-width: 500px)  {
+  .rec-dash__stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .rec-stat-card   { padding: 14px; gap: 10px; }
+  .rec-stat-card__value { font-size: 1.25rem; }
+  .rec-dash__heading h1 { font-size: 1.2rem; }
+}

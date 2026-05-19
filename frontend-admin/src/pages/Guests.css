@@ -1,2 +1,13 @@
-.guests-page h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 4px; }
-.guests-page p { font-size: 0.875rem; color: var(--gray-400); }
+.guests-page h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+.guests-page p  { font-size: 0.875rem; color: var(--gray-400); }
+.guests-table-wrap { overflow-x: auto; }
+
+@media (max-width: 900px) {
+  .bookings-controls { flex-direction: column; align-items: flex-start; }
+  .search-input { max-width: 100%; width: 100%; }
+}
+
+@media (max-width: 600px) {
+  .data-table { min-width: 560px; }
+  .guests-page h1 { font-size: 1.25rem; }
+}

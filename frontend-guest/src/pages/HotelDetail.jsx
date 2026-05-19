@@ -119,7 +119,7 @@ export default function HotelDetail() {
   const [showAllAmenities, setShowAll] = useState(false)
   const [bookingError, setBookingError] = useState('')
   const [bookingLoading, setBookingLoading] = useState(false)
-  const [bookingSuccess, setBookingSuccess] = useState(false)
+  // const [bookingSuccess, setBookingSuccess] = useState(false)
 
   if (!hotel) {
     return (
@@ -140,72 +140,129 @@ export default function HotelDetail() {
     ? selectedRoom.price * nights
     : 0
 
-  const handleBook = async () => {
-    setBookingError('')
 
-    if (!user) {
-      navigate('/login')
-      return
-    }
-    if (!selectedRoom) {
-      setBookingError('Please select a room.')
-      return
-    }
-    if (!checkIn || !checkOut) {
-      setBookingError('Please select check-in and check-out dates.')
-      return
-    }
-    if (nights <= 0) {
-      setBookingError('Check-out must be after check-in.')
-      return
-    }
 
-    setBookingLoading(true)
-    try {
-      // Replace with real API call: await createBooking({...})
-      await new Promise(r => setTimeout(r, 1200))
-      setBookingSuccess(true)
-    } catch {
-      setBookingError('Booking failed. Please try again.')
-    } finally {
-      setBookingLoading(false)
+    const handleBook = async () => {
+      setBookingError('')
+
+      if (!user) {
+        navigate('/login')
+        return
+      }
+      if (!selectedRoom) {
+        setBookingError('Please select a room first.')
+        return
+      }
+      if (!checkIn || !checkOut) {
+        setBookingError('Please select your check-in and check-out dates.')
+        return
+      }
+      if (nights <= 0) {
+        setBookingError('Check-out date must be after check-in date.')
+        return
+      }
+
+      setBookingLoading(true)
+      try {
+        // Simulated API — replace with real call when backend is ready
+        await new Promise(r => setTimeout(r, 1200))
+
+        // Build booking data to pass to confirmation page
+        const bookingData = {
+          id:            `AK-${Date.now()}`,
+          hotelId:       hotel.id,
+          hotelName:     hotel.name,
+          hotelLocation: hotel.location,
+          hotelImage:    hotel.images[0],
+          roomName:      selectedRoom.name,
+          roomType:      selectedRoom.type,
+          checkIn,
+          checkOut,
+          nights,
+          guests,
+          pricePerNight: selectedRoom.price,
+          totalAmount:   selectedRoom.price * nights,
+          taxes:         Math.round(selectedRoom.price * nights * 0.1),
+          paymentMethod: 'Pay at Hotel',
+          status:        'confirmed',
+          bookedOn:      new Date().toISOString().split('T')[0],
+        }
+
+        // Go straight to confirmation with the booking data
+        navigate('/confirmation', { state: { booking: bookingData } })
+
+      } catch {
+        setBookingError('Booking failed. Please try again.')
+      } finally {
+        setBookingLoading(false)
+      }
     }
-  }
+  // const handleBook = async () => {
+  //   setBookingError('')
+
+  //   if (!user) {
+  //     navigate('/login')
+  //     return
+  //   }
+  //   if (!selectedRoom) {
+  //     setBookingError('Please select a room.')
+  //     return
+  //   }
+  //   if (!checkIn || !checkOut) {
+  //     setBookingError('Please select check-in and check-out dates.')
+  //     return
+  //   }
+  //   if (nights <= 0) {
+  //     setBookingError('Check-out must be after check-in.')
+  //     return
+  //   }
+
+  //   setBookingLoading(true)
+  //   try {
+  //     // Replace with real API call: await createBooking({...})
+  //     await new Promise(r => setTimeout(r, 1200))
+  //     setBookingSuccess(true)
+  //   } catch {
+  //     setBookingError('Booking failed. Please try again.')
+  //   } finally {
+  //     setBookingLoading(false)
+  //   }
+  // }
 
   const displayedAmenities = showAllAmenities
     ? hotel.amenities
     : hotel.amenities.slice(0, 6)
 
-  if (bookingSuccess) {
-    return (
-      <div className="booking-success-page">
-        <div className="booking-success__card">
-          <div className="booking-success__icon">✓</div>
-          <h2>Booking Confirmed!</h2>
-          <p>Your stay at <strong>{hotel.name}</strong> is confirmed.</p>
-          <div className="booking-success__details">
-            <div><span>Room</span><strong>{selectedRoom.name}</strong></div>
-            <div><span>Check-In</span><strong>{checkIn}</strong></div>
-            <div><span>Check-Out</span><strong>{checkOut}</strong></div>
-            <div><span>Nights</span><strong>{nights}</strong></div>
-            <div><span>Guests</span><strong>{guests}</strong></div>
-            <div><span>Total</span><strong>${totalAmount.toLocaleString()}</strong></div>
-          </div>
-          <div className="booking-success__actions">
-            <button className="btn-primary" onClick={() => navigate('/')}>
-              Back to Home
-            </button>
-            <button className="btn-outline-guest" onClick={() => navigate('/bookings')}>
-              My Bookings
-            </button>
-            <button className="btn-outline-guest" onClick={() => navigate('/confirmation')}>
-              Confirm Bookings
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // if (bookingSuccess) {
+  //   return (
+  //     <div className="booking-success-page">
+  //       <div className="booking-success__card">
+  //         <div className="booking-success__icon">✓</div>
+  //         <h2>Booking Confirmed!</h2>
+  //         <p>Your stay at <strong>{hotel.name}</strong> is confirmed.</p>
+  //         <div className="booking-success__details">
+  //           <div><span>Room</span><strong>{selectedRoom.name}</strong></div>
+  //           <div><span>Check-In</span><strong>{checkIn}</strong></div>
+  //           <div><span>Check-Out</span><strong>{checkOut}</strong></div>
+  //           <div><span>Nights</span><strong>{nights}</strong></div>
+  //           <div><span>Guests</span><strong>{guests}</strong></div>
+  //           <div><span>Total</span><strong>${totalAmount.toLocaleString()}</strong></div>
+  //         </div>
+  //         <div className="booking-success__actions">
+  //           <button className="btn-primary" onClick={() => navigate('/')}>
+  //             Back to Home
+  //           </button>
+  //           <button className="btn-outline-guest" onClick={() => navigate('/bookings')}>
+  //             My Bookings
+  //           </button>
+  //           <button className="btn-outline-guest" onClick={() => navigate('/confirmation')}>
+  //             Confirm Bookings
+  //           </button>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   )
+  // }
 
   return (
     <div className="hotel-detail-page">

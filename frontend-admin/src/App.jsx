@@ -23,11 +23,11 @@ export default function App() {
             <ProtectedRoute>
               <DashboardLayout>
                 <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/hotels" element={<Hotels />} />
-                  <Route path="/rooms" element={<Rooms />} />
+                  <Route path="/"         element={<Dashboard />} />
+                  <Route path="/hotels"   element={<Hotels />} />
+                  <Route path="/rooms"    element={<Rooms />} />
                   <Route path="/bookings" element={<Bookings />} />
-                  <Route path="/guests" element={<Guests />} />
+                  <Route path="/guests"   element={<Guests />} />
                 </Routes>
               </DashboardLayout>
             </ProtectedRoute>
