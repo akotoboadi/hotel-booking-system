@@ -12,10 +12,18 @@ rooms_bp = Blueprint('rooms', __name__)
 
 
 # ── Get all rooms for a hotel (any logged-in staff or public) ────
+
 @rooms_bp.route('/hotel/<int:hotel_id>', methods=['GET'])
 def get_hotel_rooms(hotel_id):
-    hotel = Hotel.query.get_or_404(hotel_id)
+    from app.middleware.auth_middleware import jwt_optional_user
+    Hotel.query.get_or_404(hotel_id)
+
+    user   = jwt_optional_user()
     status = request.args.get('status', '')
+
+    # Staff (non-admin) can only view rooms in their own hotel
+    if user and user.role not in ['guest', 'admin'] and user.hotel_id != hotel_id:
+        return error_response('You can only view rooms in your assigned hotel', 403)
 
     query = Room.query.filter_by(hotel_id=hotel_id)
     if status:
@@ -23,6 +31,17 @@ def get_hotel_rooms(hotel_id):
 
     rooms = query.order_by(Room.floor, Room.name).all()
     return success_response(data=[r.to_dict() for r in rooms])
+# @rooms_bp.route('/hotel/<int:hotel_id>', methods=['GET'])
+# def get_hotel_rooms(hotel_id):
+#     hotel = Hotel.query.get_or_404(hotel_id)
+#     status = request.args.get('status', '')
+
+#     query = Room.query.filter_by(hotel_id=hotel_id)
+#     if status:
+#         query = query.filter_by(status=status)
+
+#     rooms = query.order_by(Room.floor, Room.name).all()
+#     return success_response(data=[r.to_dict() for r in rooms])
 
 
 # ── Get single room ──────────────────────────────────────────────
@@ -110,32 +129,43 @@ def update_room(room_id):
     return success_response(data=room.to_dict(), message='Room updated successfully')
 
 
-# ── Update room status only (receptionist, housekeeping, manager, admin) ──
+# # ── Update room status only (receptionist, housekeeping, manager, admin) ──
+
 @rooms_bp.route('/<int:room_id>/status', methods=['PATCH'])
 @roles_required('admin', 'manager', 'receptionist', 'housekeeping')
 def update_room_status(room_id):
     room = Room.query.get_or_404(room_id)
-    data = request.get_json()
+    user = get_current_user()
 
+    # Admin can update any room
+    # All other staff can only update rooms in their assigned hotel
+    if user.role != 'admin' and user.hotel_id != room.hotel_id:
+        return error_response(
+            'You can only update rooms in your assigned hotel', 403
+        )
+
+    data = request.get_json()
     if not data or 'status' not in data:
         return error_response('Status is required')
 
     new_status = data['status']
     if not validate_room_status(new_status):
-        return error_response(f'Invalid status. Must be one of: available, occupied, maintenance, reserved')
+        return error_response(
+            'Invalid status. Must be one of: available, occupied, maintenance, reserved'
+        )
 
     old_status  = room.status
     room.status = new_status
     db.session.commit()
 
-    # If room becomes dirty after checkout, create housekeeping task
+    # If room becomes available after being occupied, create housekeeping task
     if old_status == 'occupied' and new_status == 'available':
         task = HousekeepingTask(
             room_id  = room.id,
             hotel_id = room.hotel_id,
             status   = 'dirty',
             priority = 'normal',
-            notes    = f'Room needs cleaning after guest checkout',
+            notes    = 'Room needs cleaning after guest checkout',
         )
         db.session.add(task)
         db.session.commit()
@@ -144,6 +174,39 @@ def update_room_status(room_id):
         data=room.to_dict(),
         message=f'Room status updated to {new_status}'
     )
+# @rooms_bp.route('/<int:room_id>/status', methods=['PATCH'])
+# @roles_required('admin', 'manager', 'receptionist', 'housekeeping')
+# def update_room_status(room_id):
+#     room = Room.query.get_or_404(room_id)
+#     data = request.get_json()
+
+#     if not data or 'status' not in data:
+#         return error_response('Status is required')
+
+#     new_status = data['status']
+#     if not validate_room_status(new_status):
+#         return error_response(f'Invalid status. Must be one of: available, occupied, maintenance, reserved')
+
+#     old_status  = room.status
+#     room.status = new_status
+#     db.session.commit()
+
+#     # If room becomes dirty after checkout, create housekeeping task
+#     if old_status == 'occupied' and new_status == 'available':
+#         task = HousekeepingTask(
+#             room_id  = room.id,
+#             hotel_id = room.hotel_id,
+#             status   = 'dirty',
+#             priority = 'normal',
+#             notes    = f'Room needs cleaning after guest checkout',
+#         )
+#         db.session.add(task)
+#         db.session.commit()
+
+#     return success_response(
+#         data=room.to_dict(),
+#         message=f'Room status updated to {new_status}'
+#     )
 
 
 # ── Delete room (manager or admin) ───────────────────────────────
