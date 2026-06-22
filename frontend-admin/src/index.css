@@ -252,3 +252,5 @@ input, select, textarea { font-family: var(--font); outline: none; }
   .modal__header { padding: 18px 18px 14px; }
   .modal__footer { padding: 12px 18px; }
 }
+
+@keyframes spin { to { transform: rotate(360deg); } }

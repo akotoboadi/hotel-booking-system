@@ -1,46 +1,69 @@
 import axios from 'axios'
+import { API_BASE_URL } from '../config/api'
 
 const api = axios.create({
-  baseURL: '/api',
-  headers: { 'Content-Type': 'application/json' }
+  baseURL: API_BASE_URL,
+  headers: { 'Content-Type': 'application/json' },
+  timeout: 15000,
 })
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
-})
-
-api.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    if (err.response?.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      window.location.href = '/login'
+// ── Request interceptor — attach JWT token to every request ──
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('guest_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
     }
-    return Promise.reject(err)
+    return config
+  },
+  (error) => Promise.reject(error)
+)
+
+// ── Response interceptor — handle token expiry globally ──
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      const code = error.response?.data?.code
+      if (code === 'TOKEN_EXPIRED' || code === 'INVALID_TOKEN') {
+        localStorage.removeItem('guest_token')
+        localStorage.removeItem('guest_user')
+        window.location.href = '/login'
+      }
+    }
+    return Promise.reject(error)
   }
 )
 
-// Hotels
-export const getHotels = (params) => api.get('/hotels', { params })
-export const getHotel = (id) => api.get(`/hotels/${id}`)
-export const searchHotels = (params) => api.get('/hotels/search', { params })
+// ── Auth ─────────────────────────────────────────────────────
+export const authAPI = {
+  register: (data)        => api.post('/api/auth/register', data),
+  login:    (data)        => api.post('/api/auth/login', data),
+  google:   (token)       => api.post('/api/auth/google', { token }),
+  getMe:    ()            => api.get('/api/auth/me'),
+  updateProfile: (data)   => api.put('/api/auth/profile', data),
+  logout:   ()            => api.post('/api/auth/logout'),
+}
 
-// Rooms
-export const getRooms = (hotelId) => api.get(`/hotels/${hotelId}/rooms`)
-export const getRoom = (roomId) => api.get(`/rooms/${roomId}`)
+// ── Hotels ───────────────────────────────────────────────────
+export const hotelsAPI = {
+  getAll:   (params)      => api.get('/api/hotels/', { params }),
+  getOne:   (id)          => api.get(`/api/hotels/${id}`),
+  search:   (params)      => api.get('/api/hotels/search', { params }),
+}
 
-// Bookings
-export const createBooking = (data) => api.post('/bookings', data)
-export const getBooking = (id) => api.get(`/bookings/${id}`)
-export const getUserBookings = () => api.get('/bookings/my')
-export const cancelBooking = (id) => api.delete(`/bookings/${id}`)
+// ── Rooms ────────────────────────────────────────────────────
+export const roomsAPI = {
+  getByHotel: (hotelId)   => api.get(`/api/rooms/hotel/${hotelId}`),
+  getOne:     (roomId)    => api.get(`/api/rooms/${roomId}`),
+}
 
-// Auth
-export const loginUser = (data) => api.post('/auth/login', data)
-export const registerUser = (data) => api.post('/auth/register', data)
-export const getProfile = () => api.get('/auth/profile')
+// ── Bookings ─────────────────────────────────────────────────
+export const bookingsAPI = {
+  create:   (data)        => api.post('/api/bookings/', data),
+  getMyBookings: (params) => api.get('/api/bookings/my', { params }),
+  getOne:   (id)          => api.get(`/api/bookings/${id}`),
+  cancel:   (id)          => api.patch(`/api/bookings/${id}/cancel`),
+}
 
 export default api

@@ -1,19 +1,38 @@
-import { useState } from 'react'
-import { Search, Mail } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Search, Mail, Loader } from 'lucide-react'
+import api from '../services/api'
 import './Guests.css'
 
-const GUESTS = [
-  { id:1, name:'Alice Johnson',  email:'alice@example.com',  bookings:8,  spent:9420,  joined:'2024-01-12', status:'vip'     },
-  { id:2, name:'Marcus Chen',    email:'marcus@example.com', bookings:3,  spent:7100,  joined:'2024-03-05', status:'regular' },
-  { id:3, name:'Sophia Williams',email:'sophia@example.com', bookings:12, spent:15200, joined:'2023-11-20', status:'vip'     },
-  { id:4, name:'David Osei',     email:'david@example.com',  bookings:1,  spent:3100,  joined:'2025-01-08', status:'regular' },
-  { id:5, name:'Emma Brown',     email:'emma@example.com',   bookings:5,  spent:4800,  joined:'2024-06-15', status:'regular' },
-]
-
 export default function Guests() {
-  const [search, setSearch] = useState('')
+  const [guests, setGuests]   = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch]   = useState('')
 
-  const filtered = GUESTS.filter(g =>
+  useEffect(() => {
+    api.get('/api/dashboard/admin')
+      .then(res => {
+        // Extract unique guests from recent bookings
+        const bookings = res.data.data?.recent_bookings || []
+        const guestMap = {}
+        bookings.forEach(b => {
+          if (b.user_id && !guestMap[b.user_id]) {
+            guestMap[b.user_id] = {
+              id:      b.user_id,
+              name:    b.guest_name  || 'Unknown',
+              email:   b.guest_email || '',
+              bookings: 1,
+            }
+          } else if (b.user_id) {
+            guestMap[b.user_id].bookings++
+          }
+        })
+        setGuests(Object.values(guestMap))
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  const filtered = guests.filter(g =>
     g.name.toLowerCase().includes(search.toLowerCase()) ||
     g.email.toLowerCase().includes(search.toLowerCase())
   )
@@ -38,40 +57,44 @@ export default function Guests() {
         </div>
       </div>
 
-      <div className="table-card">
-        <div className="guests-table-wrap">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Guest</th><th>Email</th><th>Bookings</th>
-                <th>Total Spent</th><th>Joined</th><th>Status</th><th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(g => (
-                <tr key={g.id}>
-                  <td className="data-table__bold">{g.name}</td>
-                  <td style={{ fontSize:'0.84rem', color:'var(--gray-400)' }}>{g.email}</td>
-                  <td>{g.bookings}</td>
-                  <td className="data-table__bold">${g.spent.toLocaleString()}</td>
-                  <td style={{ fontSize:'0.84rem', color:'var(--gray-400)' }}>{g.joined}</td>
-                  <td>
-                    <span className={`badge ${g.status === 'vip' ? 'badge--info' : 'badge--success'}`}>
-                      {g.status.toUpperCase()}
-                    </span>
-                  </td>
-                  <td>
-                    <button className="table-action" style={{ display:'inline-flex', alignItems:'center', gap:4 }}>
-                      <Mail size={13} /> Contact
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {filtered.length === 0 && <div className="table-empty">No guests found.</div>}
+      {loading ? (
+        <div style={{ textAlign:'center', padding:60 }}>
+          <Loader size={28} style={{ animation:'spin 1s linear infinite', color:'var(--primary)' }} />
         </div>
-      </div>
+      ) : (
+        <div className="table-card">
+          <div className="guests-table-wrap">
+            {filtered.length === 0 ? (
+              <div className="table-empty">No guests found.</div>
+            ) : (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Guest</th><th>Email</th><th>Bookings</th><th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(g => (
+                    <tr key={g.id}>
+                      <td className="data-table__bold">{g.name}</td>
+                      <td style={{ fontSize:'0.84rem', color:'var(--gray-400)' }}>{g.email || '—'}</td>
+                      <td>{g.bookings}</td>
+                      <td>
+                        <button
+                          className="table-action"
+                          style={{ display:'inline-flex', alignItems:'center', gap:4 }}
+                        >
+                          <Mail size={13} /> Contact
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

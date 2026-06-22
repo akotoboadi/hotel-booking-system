@@ -62,9 +62,15 @@ export default function Confirmation() {
             </div>
 
             {/* Booking reference */}
-            <div className="confirmation-ref">
+            {/* <div className="confirmation-ref">
               <span>Booking Reference</span>
               <strong>{booking.id}</strong>
+              <p>Show this at check-in</p>
+            </div> */}
+
+            <div className="confirmation-ref">
+              <span>Booking Reference</span>
+              <strong>{booking.booking_ref || booking.id}</strong>
               <p>Show this at check-in</p>
             </div>
 

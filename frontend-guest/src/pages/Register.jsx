@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { authAPI } from '../services/api'
 import './Auth.css'
 
-// Inline Google SVG icon
 function GoogleIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
@@ -17,7 +17,8 @@ function GoogleIcon() {
 
 export default function Register() {
   const { login } = useAuth()
-  const navigate = useNavigate()
+  const navigate  = useNavigate()
+
   const [form, setForm]           = useState({ name: '', email: '', password: '', confirm: '' })
   const [error, setError]         = useState('')
   const [loading, setLoading]     = useState(false)
@@ -26,41 +27,32 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (form.password !== form.confirm) return setError('Passwords do not match.')
-    if (form.password.length < 6) return setError('Password must be at least 6 characters.')
+    if (form.password.length < 6)       return setError('Password must be at least 6 characters.')
     setError('')
     setLoading(true)
     try {
-      await new Promise(r => setTimeout(r, 800))
-      login(
-        { name: form.name, email: form.email, id: Date.now(), avatar: null },
-        'mock-guest-token'
-      )
+      const res  = await authAPI.register({
+        name:     form.name,
+        email:    form.email,
+        password: form.password,
+      })
+      const data = res.data.data
+      login(data.user, data.access_token)
       navigate('/')
-    } catch {
-      setError('Registration failed. Try again.')
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Registration failed. Please try again.'
+      setError(msg)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleGmailRegister = async () => {
+  const handleGoogleRegister = async () => {
     setGmail(true)
     setError('')
     try {
-      await new Promise(r => setTimeout(r, 1200))
-      login(
-        {
-          name: 'Gmail User',
-          email: 'gmailuser@gmail.com',
-          id: 99,
-          avatar: null,
-          provider: 'google',
-        },
-        'mock-google-token'
-      )
-      navigate('/')
-    } catch {
-      setError('Google sign-up failed. Please try again.')
+      await new Promise(r => setTimeout(r, 800))
+      setError('Google sign-up requires configuration. Use email registration for now.')
     } finally {
       setGmail(false)
     }
@@ -70,36 +62,30 @@ export default function Register() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-card__header">
-          <Link to="/" className="auth-card__logo">
-            AKStay<span>·</span>
-          </Link>
+          <Link to="/" className="auth-card__logo">AKStay<span>·</span></Link>
           <h1>Create account</h1>
           <p>Start exploring extraordinary stays</p>
         </div>
 
         {error && <div className="auth-error">{error}</div>}
 
-        {/* Gmail register button */}
         <button
           type="button"
           className="gmail-btn"
-          onClick={handleGmailRegister}
+          onClick={handleGoogleRegister}
           disabled={gmailLoading}
         >
           {gmailLoading ? <span className="gmail-btn__spinner" /> : <GoogleIcon />}
-          {gmailLoading ? 'Connecting to Google...' : 'Sign up with Google'}
+          {gmailLoading ? 'Connecting...' : 'Sign up with Google'}
         </button>
 
-        <div className="auth-divider">
-          <span>or register with email</span>
-        </div>
+        <div className="auth-divider"><span>or register with email</span></div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Full Name</label>
             <input
-              type="text"
-              placeholder="John Doe"
+              type="text" placeholder="John Doe"
               value={form.name}
               onChange={e => setForm({ ...form, name: e.target.value })}
               required
@@ -108,8 +94,7 @@ export default function Register() {
           <div className="form-group">
             <label>Email</label>
             <input
-              type="email"
-              placeholder="you@example.com"
+              type="email" placeholder="you@example.com"
               value={form.email}
               onChange={e => setForm({ ...form, email: e.target.value })}
               required
@@ -118,8 +103,7 @@ export default function Register() {
           <div className="form-group">
             <label>Password</label>
             <input
-              type="password"
-              placeholder="Min. 6 characters"
+              type="password" placeholder="Min. 6 characters"
               value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })}
               required
@@ -128,18 +112,13 @@ export default function Register() {
           <div className="form-group">
             <label>Confirm Password</label>
             <input
-              type="password"
-              placeholder="Repeat password"
+              type="password" placeholder="Repeat password"
               value={form.confirm}
               onChange={e => setForm({ ...form, confirm: e.target.value })}
               required
             />
           </div>
-          <button
-            type="submit"
-            className="btn-primary auth-submit"
-            disabled={loading}
-          >
+          <button type="submit" className="btn-primary auth-submit" disabled={loading}>
             {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
@@ -150,10 +129,7 @@ export default function Register() {
       </div>
 
       <div className="auth-visual">
-        <img
-          src="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800"
-          alt="hotel"
-        />
+        <img src="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800" alt="hotel" />
         <div className="auth-visual__overlay">
           <blockquote>"The world is yours to explore."</blockquote>
         </div>

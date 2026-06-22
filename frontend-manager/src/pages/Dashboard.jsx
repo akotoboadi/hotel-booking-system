@@ -1,58 +1,91 @@
+import { useState, useEffect } from 'react'
 import {
   BedDouble, CalendarCheck, TrendingUp, Users,
-  ArrowUp, ArrowDown, Clock, CheckCircle2, AlertCircle
+  ArrowUp, ArrowDown, Clock, CheckCircle2, AlertCircle, Loader
 } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
+import { dashboardAPI, bookingsAPI } from '../services/api'
+import { useAuth } from '../context/AuthContext'
 import './Dashboard.css'
 
-const revenueData = [
-  { day: 'Mon', revenue: 4200 }, { day: 'Tue', revenue: 5800 },
-  { day: 'Wed', revenue: 4100 }, { day: 'Thu', revenue: 7200 },
-  { day: 'Fri', revenue: 9100 }, { day: 'Sat', revenue: 11400 },
-  { day: 'Sun', revenue: 8600 },
-]
-
-const occupancyData = [
-  { month: 'Jan', rate: 62 }, { month: 'Feb', rate: 71 },
-  { month: 'Mar', rate: 68 }, { month: 'Apr', rate: 79 },
-  { month: 'May', rate: 85 }, { month: 'Jun', rate: 91 },
-  { month: 'Jul', rate: 88 },
-]
-
-const STATS = [
-  { label: 'Total Rooms',      value: '48',   sub: '6 under maintenance', icon: BedDouble,     color: '#6366f1', up: null },
-  { label: 'Occupancy Rate',   value: '78%',  sub: '+5% vs last month',   icon: TrendingUp,    color: '#10b981', up: true },
-  { label: "Today's Bookings", value: '12',   sub: '3 check-ins pending', icon: CalendarCheck, color: '#f59e0b', up: true },
-  { label: 'Active Guests',    value: '34',   sub: '8 checking out today', icon: Users,         color: '#3b82f6', up: null },
-]
-
-const TODAY_ARRIVALS = [
-  { id: 'BK081', guest: 'Alice Johnson',  room: '204', time: '14:00', status: 'confirmed' },
-  { id: 'BK082', guest: 'Marcus Chen',    room: '301', time: '15:30', status: 'confirmed' },
-  { id: 'BK083', guest: 'Sophia Osei',    room: '112', time: '16:00', status: 'pending'   },
-  { id: 'BK084', guest: 'James Antwi',    room: '405', time: '18:00', status: 'confirmed' },
-]
-
-const ROOM_STATUS = [
-  { type: 'Available',    count: 26, color: '#10b981' },
-  { type: 'Occupied',     count: 16, color: '#6366f1' },
-  { type: 'Maintenance',  count:  6, color: '#f59e0b' },
-]
-
 export default function Dashboard() {
+  const { user }              = useAuth()
+  const [data, setData]       = useState(null)
+  const [today, setToday]     = useState({ arrivals: [], departures: [] })
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState('')
+
+  const hotelId = user?.hotel_id
+
+  useEffect(() => {
+    if (!hotelId) return
+    const fetchAll = async () => {
+      try {
+        const [dashRes, todayRes] = await Promise.all([
+          dashboardAPI.getHotel(hotelId),
+          bookingsAPI.getToday(hotelId),
+        ])
+        setData(dashRes.data.data)
+        setToday(todayRes.data.data)
+      } catch {
+        setError('Failed to load dashboard data.')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchAll()
+  }, [hotelId])
+
+  if (!hotelId) {
+    return (
+      <div style={{ textAlign:'center', padding:60, color:'var(--gray-500)' }}>
+        <p>Your account is not assigned to a hotel yet.</p>
+        <p style={{ fontSize:'0.85rem', marginTop:8 }}>Contact the system administrator.</p>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'60vh' }}>
+        <Loader size={32} style={{ animation:'spin 1s linear infinite', color:'var(--primary)' }} />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div style={{ textAlign:'center', padding:60, color:'var(--gray-400)' }}>
+        <p>{error}</p>
+        <button className="btn-primary" style={{ marginTop:16 }} onClick={() => window.location.reload()}>Retry</button>
+      </div>
+    )
+  }
+
+  const stats   = data?.stats        || {}
+  const weekly  = data?.weekly_revenue || []
+  const hotel   = data?.hotel         || {}
+
+  const STATS = [
+    { label: 'Total Rooms',       value: stats.total_rooms    || 0,    sub: `${stats.available || 0} available`,      icon: BedDouble,     color: '#6366f1' },
+    { label: 'Occupancy Rate',    value: `${stats.occupancy_rate || 0}%`, sub: `${stats.occupied || 0} rooms occupied`, icon: TrendingUp,    color: '#10b981' },
+    { label: "Today's Arrivals",  value: today.arrivals?.length   || 0, sub: 'expected check-ins',                    icon: CalendarCheck, color: '#f59e0b' },
+    { label: 'Active Guests',     value: stats.occupied       || 0,    sub: 'currently in hotel',                    icon: Users,         color: '#3b82f6' },
+  ]
+
   return (
     <div className="mgr-dash">
       <div className="mgr-dash__heading">
         <div>
           <h1>Hotel Dashboard</h1>
-          <p>The Grand Meridian · Wednesday, 2 July 2025</p>
+          <p>{hotel.name} · {new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' })}</p>
         </div>
       </div>
 
-      {/* Stat cards */}
+      {/* Stats */}
       <div className="mgr-dash__stats">
         {STATS.map(s => {
           const Icon = s.icon
@@ -64,18 +97,14 @@ export default function Dashboard() {
               <div>
                 <p className="stat-card__label">{s.label}</p>
                 <p className="stat-card__value">{s.value}</p>
-                <p className="stat-card__sub">
-                  {s.up === true  && <ArrowUp size={11} color="#10b981" />}
-                  {s.up === false && <ArrowDown size={11} color="#ef4444" />}
-                  {s.sub}
-                </p>
+                <p className="stat-card__sub">{s.sub}</p>
               </div>
             </div>
           )
         })}
       </div>
 
-      {/* Charts row */}
+      {/* Charts */}
       <div className="mgr-dash__charts">
         <div className="chart-card">
           <div className="chart-card__hd">
@@ -83,84 +112,35 @@ export default function Dashboard() {
             <span>Daily breakdown</span>
           </div>
           <ResponsiveContainer width="100%" height={210}>
-            <AreaChart data={revenueData}>
+            <AreaChart data={weekly}>
               <defs>
                 <linearGradient id="rg" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%"  stopColor="#6366f1" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0}    />
+                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={v => `$${v/1000}k`} />
+              <XAxis dataKey="day" tick={{ fontSize:11, fill:'#94a3b8' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize:11, fill:'#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}`} />
               <Tooltip formatter={v => [`$${v.toLocaleString()}`, 'Revenue']} />
               <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2.5} fill="url(#rg)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="chart-card">
-          <div className="chart-card__hd">
-            <h3>Occupancy Rate</h3>
-            <span>Monthly</span>
-          </div>
-          <ResponsiveContainer width="100%" height={210}>
-            <BarChart data={occupancyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={v => `${v}%`} domain={[0, 100]} />
-              <Tooltip formatter={v => [`${v}%`, 'Occupancy']} />
-              <Bar dataKey="rate" fill="#6366f1" radius={[4,4,0,0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Bottom row */}
-      <div className="mgr-dash__bottom">
-        {/* Today's arrivals */}
-        <div className="table-card">
-          <div className="table-card__header">
-            <h3>Today's Arrivals</h3>
-            <span className="badge badge--info">{TODAY_ARRIVALS.length} guests</span>
-          </div>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Booking</th><th>Guest</th><th>Room</th><th>ETA</th><th>Status</th><th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {TODAY_ARRIVALS.map(a => (
-                <tr key={a.id}>
-                  <td className="td-mono">{a.id}</td>
-                  <td className="td-bold">{a.guest}</td>
-                  <td>Room {a.room}</td>
-                  <td>
-                    <span style={{ display:'flex', alignItems:'center', gap:5, fontSize:'0.83rem' }}>
-                      <Clock size={12} color="var(--gray-400)" /> {a.time}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`badge badge--${a.status === 'confirmed' ? 'success' : 'warning'}`}>
-                      {a.status}
-                    </span>
-                  </td>
-                  <td><button className="td-action">Check In</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
         {/* Room status */}
         <div className="chart-card room-status-card">
           <div className="chart-card__hd">
             <h3>Room Status</h3>
-            <span>48 total rooms</span>
+            <span>{stats.total_rooms || 0} total rooms</span>
           </div>
           <div className="room-status__bars">
-            {ROOM_STATUS.map(r => (
+            {[
+              { type: 'Available',   count: stats.available   || 0, color: '#10b981' },
+              { type: 'Occupied',    count: stats.occupied    || 0, color: '#6366f1' },
+              { type: 'Reserved',    count: stats.reserved    || 0, color: '#3b82f6' },
+              { type: 'Maintenance', count: stats.maintenance || 0, color: '#f59e0b' },
+            ].map(r => (
               <div key={r.type} className="room-status__item">
                 <div className="room-status__label">
                   <span>{r.type}</span>
@@ -169,7 +149,12 @@ export default function Dashboard() {
                 <div className="room-status__track">
                   <div
                     className="room-status__fill"
-                    style={{ width: `${(r.count / 48) * 100}%`, background: r.color }}
+                    style={{
+                      width: stats.total_rooms
+                        ? `${(r.count / stats.total_rooms) * 100}%`
+                        : '0%',
+                      background: r.color
+                    }}
                   />
                 </div>
               </div>
@@ -178,12 +163,76 @@ export default function Dashboard() {
 
           <div className="room-status__alerts">
             <div className="alert-item alert-item--success">
-              <CheckCircle2 size={14} /> 26 rooms ready for new guests
+              <CheckCircle2 size={14} /> {stats.available || 0} rooms ready for guests
             </div>
-            <div className="alert-item alert-item--warning">
-              <AlertCircle size={14} /> 6 rooms need maintenance review
-            </div>
+            {(stats.maintenance || 0) > 0 && (
+              <div className="alert-item alert-item--warning">
+                <AlertCircle size={14} /> {stats.maintenance} rooms need maintenance
+              </div>
+            )}
           </div>
+        </div>
+      </div>
+
+      {/* Today's arrivals and departures */}
+      <div className="mgr-dash__bottom">
+        <div className="table-card">
+          <div className="table-card__header">
+            <h3>Today's Arrivals</h3>
+            <span className="badge badge--info">{today.arrivals?.length || 0} guests</span>
+          </div>
+          {today.arrivals?.length === 0 ? (
+            <div className="table-empty">No arrivals today.</div>
+          ) : (
+            <table className="data-table">
+              <thead>
+                <tr><th>Ref</th><th>Guest</th><th>Room</th><th>Nights</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                {today.arrivals.map(b => (
+                  <tr key={b.id}>
+                    <td className="td-mono">{b.booking_ref}</td>
+                    <td className="td-bold">{b.guest_name}</td>
+                    <td>{b.room_name}</td>
+                    <td>{b.nights}</td>
+                    <td>
+                      <span className={`badge badge--${b.status === 'confirmed' ? 'success' : 'info'}`}>
+                        {b.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        <div className="table-card">
+          <div className="table-card__header">
+            <h3>Today's Departures</h3>
+            <span className="badge badge--warning">{today.departures?.length || 0} guests</span>
+          </div>
+          {today.departures?.length === 0 ? (
+            <div className="table-empty">No departures today.</div>
+          ) : (
+            <table className="data-table">
+              <thead>
+                <tr><th>Ref</th><th>Guest</th><th>Room</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                {today.departures.map(b => (
+                  <tr key={b.id}>
+                    <td className="td-mono">{b.booking_ref}</td>
+                    <td className="td-bold">{b.guest_name}</td>
+                    <td>{b.room_name}</td>
+                    <td>
+                      <span className="badge badge--warning">{b.status}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

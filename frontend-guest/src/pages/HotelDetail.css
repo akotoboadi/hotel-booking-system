@@ -347,6 +347,28 @@
 }
 .btn-outline-guest:hover { border-color: var(--primary); color: var(--primary); }
 
+
+
+.room-option--unavailable {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.room-unavailable-tag {
+  font-size: 0.75rem;
+  color: var(--danger);
+  font-weight: 600;
+  background: var(--danger-light);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+.spin {
+  animation: spin 1s linear infinite;
+  color: var(--accent);
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+
+
 /* ── Responsive ── */
 @media (max-width: 1024px) {
   .hotel-detail__body {

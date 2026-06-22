@@ -206,6 +206,47 @@
 .account-info-row span  { color: var(--gray-400); }
 .account-info-row strong { color: var(--gray-800); font-weight: 600; }
 
+
+.profile-error {
+  margin: 0 24px 4px;
+  background: var(--danger-light);
+  color: var(--danger);
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.84rem;
+}
+.profile-pwd-form {
+  padding: 0 0 8px;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.form-group label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray-400);
+}
+.form-group input {
+  padding: 9px 12px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 7px;
+  font-size: 0.88rem;
+  font-family: var(--font-body);
+  transition: border-color 0.2s;
+}
+.form-group input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+
+
+
 /* ── Responsive ── */
 @media (max-width: 900px) {
   .profile-layout { grid-template-columns: 1fr; }

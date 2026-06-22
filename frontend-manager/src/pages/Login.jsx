@@ -1,35 +1,35 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { authAPI } from '../services/api'
 import { Building2, Eye, EyeOff } from 'lucide-react'
 import './Login.css'
 
 export default function ManagerLogin() {
   const { login } = useAuth()
-  const navigate = useNavigate()
-  const [form, setForm] = useState({ email: '', password: '' })
+  const navigate  = useNavigate()
+  const [form, setForm]       = useState({ email: '', password: '' })
   const [showPwd, setShowPwd] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError]     = useState('')
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true); setError('')
     try {
-      await new Promise(r => setTimeout(r, 700))
-      if (form.email === 'manager@akstay.com' && form.password === 'manager123') {
-        login({
-          name: 'Kofi Mensah',
-          email: form.email,
-          role: 'manager',
-          hotelName: 'The Grand Meridian',
-          hotelId: 1,
-        })
-        navigate('/')
-      } else {
-        setError('Invalid credentials. Try manager@akstay.com / manager123')
+      const res  = await authAPI.login(form)
+      const data = res.data.data
+      if (data.user.role !== 'manager') {
+        setError('Access denied. This portal is for hotel managers only.')
+        return
       }
-    } finally { setLoading(false) }
+      login(data.user, data.access_token)
+      navigate('/')
+    } catch (err) {
+      setError(err.response?.data?.error || 'Login failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -74,15 +74,26 @@ export default function ManagerLogin() {
                 </button>
               </div>
             </div>
-            <button type="submit" className="btn-primary mgr-login__submit" disabled={loading}>
+            <button
+              type="submit"
+              className="btn-primary mgr-login__submit"
+              disabled={loading}
+            >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
+
+          <p style={{ marginTop:16, fontSize:'0.78rem', color:'var(--gray-400)', textAlign:'center' }}>
+            Demo: manager@grandmeridian.com / manager123
+          </p>
         </div>
       </div>
 
       <div className="mgr-login__right">
-        <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=900" alt="hotel" />
+        <img
+          src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=900"
+          alt="hotel"
+        />
         <div className="mgr-login__overlay">
           <h2>"Manage your property with clarity and confidence."</h2>
           <p>AKStay Manager Portal gives you everything you need to run a world-class hotel.</p>

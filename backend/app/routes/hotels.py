@@ -11,26 +11,54 @@ hotels_bp = Blueprint('hotels', __name__)
 
 
 # ── Get all hotels (public) ──────────────────────────────────────
+# @hotels_bp.route('/', methods=['GET'])
+# def get_hotels():
+#     page     = request.args.get('page', 1, type=int)
+#     per_page = request.args.get('per_page', 12, type=int)
+#     type_    = request.args.get('type', '')
+#     status   = request.args.get('status', 'active')
+
+#     query = Hotel.query
+
+#     # Guests only see active hotels
+#     user = jwt_optional_user()
+#     if not user or user.role == 'guest':
+#         query = query.filter_by(status='active')
+#     elif status:
+#         query = query.filter_by(status=status)
+
+#     if type_:
+#         query = query.filter(Hotel.type.ilike(f'%{type_}%'))
+
+#     result = paginate_query(query.order_by(Hotel.created_at.desc()), page, per_page)
+#     return success_response(data=result)
+
 @hotels_bp.route('/', methods=['GET'])
 def get_hotels():
     page     = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 12, type=int)
     type_    = request.args.get('type', '')
-    status   = request.args.get('status', 'active')
 
     query = Hotel.query
 
-    # Guests only see active hotels
+    # Check if request has a valid admin/staff token
     user = jwt_optional_user()
-    if not user or user.role == 'guest':
+    if user and user.role in ['admin', 'manager', 'receptionist']:
+        # Staff see all hotels regardless of status
+        status = request.args.get('status', '')
+        if status:
+            query = query.filter_by(status=status)
+    else:
+        # Guests and public only see active hotels
         query = query.filter_by(status='active')
-    elif status:
-        query = query.filter_by(status=status)
 
     if type_:
         query = query.filter(Hotel.type.ilike(f'%{type_}%'))
 
-    result = paginate_query(query.order_by(Hotel.created_at.desc()), page, per_page)
+    result = paginate_query(
+        query.order_by(Hotel.created_at.desc()),
+        page, per_page
+    )
     return success_response(data=result)
 
 

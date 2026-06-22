@@ -250,3 +250,5 @@ input, select, textarea { font-family: var(--font); outline: none; }
 .info-box strong { display: block; margin-bottom: 6px; }
 .info-box ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .info-box ul li::before { content: '✓  '; font-weight: 700; }
+
+@keyframes spin { to { transform: rotate(360deg); } }

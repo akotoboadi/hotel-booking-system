@@ -1,27 +1,34 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { authAPI } from '../services/api'
 import './Login.css'
 
 export default function AdminLogin() {
-  const { login } = useAuth()
-  const navigate = useNavigate()
+  const { login }   = useAuth()
+  const navigate    = useNavigate()
   const [form, setForm]       = useState({ email: '', password: '' })
   const [error, setError]     = useState('')
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true); setError('')
+    setLoading(true)
+    setError('')
     try {
-      await new Promise(r => setTimeout(r, 600))
-      if (form.email === 'admin@akstay.com' && form.password === 'admin123') {
-        login({ name: 'Super Admin', email: form.email, role: 'admin' })
-        navigate('/')
-      } else {
-        setError('Invalid credentials. Try admin@akstay.com / admin123')
+      const res  = await authAPI.login(form)
+      const data = res.data.data
+      if (data.user.role !== 'admin') {
+        setError('Access denied. This portal is for administrators only.')
+        return
       }
-    } finally { setLoading(false) }
+      login(data.user, data.access_token)
+      navigate('/')
+    } catch (err) {
+      setError(err.response?.data?.error || 'Login failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -31,7 +38,6 @@ export default function AdminLogin() {
           AKStay<span>·</span>
           <small>Admin</small>
         </div>
-
         <h1>Sign in to Admin</h1>
         <p>Manage your properties and bookings</p>
 
@@ -66,6 +72,10 @@ export default function AdminLogin() {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+
+        <p style={{ marginTop:16, fontSize:'0.78rem', color:'var(--gray-400)', textAlign:'center' }}>
+          Demo: admin@akstay.com / admin123
+        </p>
       </div>
     </div>
   )

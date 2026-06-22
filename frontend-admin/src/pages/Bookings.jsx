@@ -1,32 +1,58 @@
-import { useState } from 'react'
-import { Search } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Search, Loader } from 'lucide-react'
+import { bookingsAPI, hotelsAPI } from '../services/api'
 import './Bookings.css'
 
-const BOOKINGS = [
-  { id: 'BK001', guest: 'Alice Johnson',   hotel: 'The Grand Meridian', room: 'Deluxe Suite',    checkIn: '2025-08-10', checkOut: '2025-08-13', amount: 1260, status: 'confirmed' },
-  { id: 'BK002', guest: 'Marcus Chen',     hotel: 'Azura Beach Resort', room: 'Ocean Villa',     checkIn: '2025-08-12', checkOut: '2025-08-19', amount: 6230, status: 'pending'   },
-  { id: 'BK003', guest: 'Sophia Williams', hotel: 'Urban Loft Tokyo',   room: 'Studio',          checkIn: '2025-08-14', checkOut: '2025-08-16', amount: 390,  status: 'confirmed' },
-  { id: 'BK004', guest: 'David Osei',      hotel: 'Alpine Chalet',      room: 'Mountain Suite',  checkIn: '2025-08-15', checkOut: '2025-08-20', amount: 3100, status: 'cancelled' },
-  { id: 'BK005', guest: 'Emma Brown',      hotel: 'The Vine Boutique',  room: 'Garden Room',     checkIn: '2025-08-18', checkOut: '2025-08-21', amount: 840,  status: 'confirmed' },
-]
-
 export default function Bookings() {
-  const [search, setSearch]   = useState('')
-  const [statusFilter, setStatus] = useState('all')
+  const [bookings, setBookings]     = useState([])
+  const [hotels, setHotels]         = useState([])
+  const [loading, setLoading]       = useState(true)
+  const [search, setSearch]         = useState('')
+  const [statusFilter, setStatus]   = useState('all')
+  const [selectedHotel, setHotelId] = useState('all')
 
-  const filtered = BOOKINGS.filter(b =>
-    (statusFilter === 'all' || b.status === statusFilter) &&
-    (b.guest.toLowerCase().includes(search.toLowerCase()) ||
-     b.hotel.toLowerCase().includes(search.toLowerCase()) ||
-     b.id.toLowerCase().includes(search.toLowerCase()))
-  )
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const hotelsRes = await hotelsAPI.getAll({ per_page: 50 })
+        const hotelList = hotelsRes.data.data.items || []
+        setHotels(hotelList)
+
+        // Fetch bookings for all hotels
+        const allBookings = []
+        for (const hotel of hotelList) {
+          try {
+            const bRes = await bookingsAPI.getByHotel(hotel.id, { per_page: 100 })
+            allBookings.push(...(bRes.data.data.items || []))
+          } catch {}
+        }
+        setBookings(allBookings)
+      } catch {
+        // silent
+      } finally {
+        setLoading(false)
+      }
+    }
+    init()
+  }, [])
+
+  const filtered = bookings.filter(b => {
+    const matchStatus = statusFilter === 'all' || b.status === statusFilter
+    const matchHotel  = selectedHotel === 'all' || String(b.hotel_id) === selectedHotel
+    const matchSearch = (
+      (b.guest_name  || '').toLowerCase().includes(search.toLowerCase()) ||
+      (b.hotel_name  || '').toLowerCase().includes(search.toLowerCase()) ||
+      (b.booking_ref || '').toLowerCase().includes(search.toLowerCase())
+    )
+    return matchStatus && matchHotel && matchSearch
+  })
 
   return (
     <div className="bookings-page">
       <div className="page-header">
         <div>
           <h1>Bookings</h1>
-          <p>{filtered.length} total bookings</p>
+          <p>{filtered.length} bookings</p>
         </div>
       </div>
 
@@ -34,56 +60,77 @@ export default function Bookings() {
         <div className="search-input">
           <Search size={15} />
           <input
-            placeholder="Search by guest, hotel or ID..."
+            placeholder="Search by guest, hotel or booking ref..."
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
         </div>
+        <select
+          className="status-select"
+          value={selectedHotel}
+          onChange={e => setHotelId(e.target.value)}
+        >
+          <option value="all">All Hotels</option>
+          {hotels.map(h => <option key={h.id} value={String(h.id)}>{h.name}</option>)}
+        </select>
         <div className="status-tabs">
-          {['all','confirmed','pending','cancelled'].map(s => (
+          {['all','confirmed','checked_in','completed','cancelled'].map(s => (
             <button
               key={s}
               className={`status-tab ${statusFilter === s ? 'status-tab--active' : ''}`}
               onClick={() => setStatus(s)}
             >
-              {s.charAt(0).toUpperCase() + s.slice(1)}
+              {s === 'all' ? 'All' : s.replace('_', ' ').replace(/^\w/, c => c.toUpperCase())}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="table-card">
-        <div className="bookings-table-wrap">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>ID</th><th>Guest</th><th>Hotel</th><th>Room</th>
-                <th>Check-In</th><th>Check-Out</th><th>Amount</th><th>Status</th><th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(b => (
-                <tr key={b.id}>
-                  <td className="data-table__id">{b.id}</td>
-                  <td className="data-table__bold">{b.guest}</td>
-                  <td>{b.hotel}</td>
-                  <td>{b.room}</td>
-                  <td>{b.checkIn}</td>
-                  <td>{b.checkOut}</td>
-                  <td className="data-table__bold">${b.amount.toLocaleString()}</td>
-                  <td>
-                    <span className={`badge badge--${b.status === 'confirmed' ? 'success' : b.status === 'pending' ? 'warning' : 'danger'}`}>
-                      {b.status}
-                    </span>
-                  </td>
-                  <td><button className="table-action">View</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {filtered.length === 0 && <div className="table-empty">No bookings found.</div>}
+      {loading ? (
+        <div style={{ textAlign:'center', padding:60 }}>
+          <Loader size={28} style={{ animation:'spin 1s linear infinite', color:'var(--primary)' }} />
         </div>
-      </div>
+      ) : (
+        <div className="table-card">
+          <div className="bookings-table-wrap">
+            {filtered.length === 0 ? (
+              <div className="table-empty">No bookings found.</div>
+            ) : (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Ref</th><th>Guest</th><th>Hotel</th><th>Room</th>
+                    <th>Check-In</th><th>Check-Out</th><th>Amount</th><th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(b => (
+                    <tr key={b.id}>
+                      <td className="data-table__id">{b.booking_ref}</td>
+                      <td className="data-table__bold">{b.guest_name}</td>
+                      <td>{b.hotel_name}</td>
+                      <td>{b.room_name}</td>
+                      <td>{b.check_in}</td>
+                      <td>{b.check_out}</td>
+                      <td className="data-table__bold">${(b.total_amount || 0).toLocaleString()}</td>
+                      <td>
+                        <span className={`badge badge--${
+                          b.status === 'confirmed'  ? 'success' :
+                          b.status === 'checked_in' ? 'info'    :
+                          b.status === 'completed'  ? 'info'    :
+                          b.status === 'cancelled'  ? 'danger'  : 'warning'
+                        }`}>
+                          {b.status?.replace('_', ' ')}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
