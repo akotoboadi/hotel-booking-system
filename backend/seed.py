@@ -160,6 +160,7 @@ def seed():
         print("  Manager 2:   manager@azura.com       / manager123")
         print("  Receptionist: reception@akstay.com   / reception123")
         print("  Guest:        guest@akstay.com        / guest123")
+        # for Odasani hotel , email for manager added is ababio@odasani.com , password staff123, default password for managers it would be changed by the manager when he logs in,
 
 if __name__ == '__main__':
     seed()
